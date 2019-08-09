@@ -1,0 +1,6 @@
+{
+  "apiPort": 8070,
+  "api接口读/写超时": "单位是毫秒",
+  "apiReadTimeout": 5000,
+  "apiWriteTimeout": 5000
+}
