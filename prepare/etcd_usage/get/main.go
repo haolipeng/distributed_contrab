@@ -46,6 +46,7 @@ func main() {
 	}
 
 	//get + 只获取个数,此时Kvs数组中没有值
+	//更多的OpOption可参考官网手册
 	getResp, err = kv.Get(context.TODO(), "/cron/jobs/", clientv3.WithPrefix(), clientv3.WithCountOnly())
 	if err != nil {
 		fmt.Println("etcd get opertion failed!")
