@@ -18,7 +18,7 @@ func main() {
 
 	//初始化配置
 	config = clientv3.Config{
-		Endpoints:   []string{"192.168.57.139:2379"},
+		Endpoints:   []string{"192.168.101.240:2379"},
 		DialTimeout: 5 * time.Second,
 	}
 
@@ -47,7 +47,7 @@ func main() {
 
 	//get + 只获取个数,此时Kvs数组中没有值
 	//更多的OpOption可参考官网手册
-	getResp, err = kv.Get(context.TODO(), "/cron/jobs/", clientv3.WithPrefix(), clientv3.WithCountOnly())
+	getResp, err = kv.Get(context.TODO(), "/cron/jobs/", clientv3.WithPrefix())
 	if err != nil {
 		fmt.Println("etcd get opertion failed!")
 		return

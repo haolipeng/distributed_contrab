@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"runtime"
+	"time"
 )
 
 var (
@@ -41,11 +42,19 @@ func main() {
 		goto ERR
 	}
 
-	//启动api http服务
+	//初始化任务管理器
+	if err = master.InitJobMgr(); err != nil {
+		goto ERR
+	}
+
+	//启动api http服务,用于接收web页面请求
 	if err = master.InitApiServer(); err != nil {
 		goto ERR
 	}
 
+	for {
+		time.Sleep(time.Second)
+	}
 ERR:
 	fmt.Println(err)
 }

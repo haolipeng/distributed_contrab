@@ -6,13 +6,16 @@ import (
 	"io/ioutil"
 )
 
+//解析json
 type Config struct {
-	ApiPort         int `json:"apiPort"`
-	ApiReadTimeout  int `json:"apiReadTimeout"`
-	ApiWriteTimeout int `json:"apiWriteTimeout"`
+	ApiPort         int      `json:"apiPort"`
+	ApiReadTimeout  int      `json:"apiReadTimeout"`
+	ApiWriteTimeout int      `json:"apiWriteTimeout"`
+	EtcdEndpoints   []string `json:"etcdEndpoints"`
+	EtcdDialTimeout int      `json:"etcdDialTimeout"`
 }
 
-//单例对象
+//单例对象 用于配置
 var (
 	G_config *Config
 )
@@ -41,5 +44,5 @@ func InitConfig(fileName string) (err error) {
 	//赋值单例
 	G_config = &cfg
 
-	return
+	return err
 }
