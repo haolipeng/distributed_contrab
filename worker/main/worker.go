@@ -1,7 +1,7 @@
 package main
 
 import (
-	"distributed_contrab/master"
+	"distributed_contrab/worker"
 	"flag"
 	"fmt"
 	"runtime"
@@ -37,12 +37,12 @@ func main() {
 	initEnv()
 
 	//初始化配置,json配置文件放置到GOPATH目录下
-	err = master.InitConfig(confFile)
+	err = worker.InitConfig(confFile)
 	if err != nil {
 		goto ERR
 	}
 
-	//创建处理协程 TODO:
+	//初始化任务管理
 
 	for {
 		time.Sleep(time.Second)
