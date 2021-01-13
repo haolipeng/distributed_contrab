@@ -14,9 +14,9 @@ var (
 
 //解析命令行参数
 func initArgs() {
-	//master -config ./master.json
-	//master -h
-	flag.StringVar(&confFile, "config", "./master/main/master.json", "specify master.json")
+	//worker -config ./worker.json
+	//worker -h
+	flag.StringVar(&confFile, "config", "./worker/main/worker.json", "specify worker.json")
 	flag.Parse()
 }
 
@@ -42,15 +42,7 @@ func main() {
 		goto ERR
 	}
 
-	//初始化任务管理器
-	if err = master.InitJobMgr(); err != nil {
-		goto ERR
-	}
-
-	//启动api http服务,用于接收web页面请求
-	if err = master.InitApiServer(); err != nil {
-		goto ERR
-	}
+	//创建处理协程 TODO:
 
 	for {
 		time.Sleep(time.Second)

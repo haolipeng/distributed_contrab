@@ -14,8 +14,8 @@
   "etcd的连接超时": "单位毫秒",
   "etcdDialTimeout": 5000,
 
-  "web页面根目录": "静态页面，前后端分离开发",
-  "webroot": "./webroot",
+  "web页面根目录": "静态页面，前后端分离开发，写绝对路径",
+  "webroot": "D:\\goProject\\src\\distributed_contrab\\master\\main\\webroot",
 
   "mongodb地址": "采用mongodb URI",
   "mongodbUri": "mongodb://36.111.184.221:27017",
