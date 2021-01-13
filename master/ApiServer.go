@@ -138,6 +138,8 @@ func InitApiServer() error {
 	//设置路由
 	mux = http.NewServeMux()
 	mux.HandleFunc("/job/save", handleJobSave)
+	mux.HandleFunc("/job/list", handleJobList)
+	mux.HandleFunc("/job/delete", handleJobDelete)
 
 	//启动TCP侦听
 	if listen, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.ApiPort)); err != nil {

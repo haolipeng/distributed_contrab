@@ -4,6 +4,7 @@ import (
 	"context"
 	"distributed_contrab/common"
 	"encoding/json"
+	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"time"
 )
@@ -55,7 +56,7 @@ func InitJobMgr() (err error) {
 	return err
 }
 
-//保存任务，保存成功返回上一个任务
+//保存任务，保存成功返回上一个任务,新增任务和保存任务是一个接口
 func (jobMrg *JobMgr) JobSave(job *common.Job) (oldJob *common.Job, err error) {
 	var (
 		jobKey   string
@@ -138,6 +139,7 @@ func (jobMrg *JobMgr) JobList() ([]*common.Job, error) {
 			job = &common.Job{}
 			//反序列化json
 			if err = json.Unmarshal(kvPairs.Value, job); err != nil {
+				fmt.Println("JobList json.Unmarshal failed")
 				err = nil
 				continue
 			}

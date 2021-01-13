@@ -4,9 +4,9 @@ import "encoding/json"
 
 //任务信息
 type Job struct {
-	Name     string `json:"name"`    //任务名
-	Command  string `json:"command"` //shell命令
-	CronExpr string `json:"cronExpr"`
+	Name     string `json:"name"`     //任务名
+	Command  string `json:"command"`  //shell命令
+	CronExpr string `json:"cronExpr"` //crontab表达式
 }
 
 type Response struct {
