@@ -126,6 +126,40 @@ ERR:
 	}
 }
 
+//强杀任务  /job/kill  name=job1
+func handleJobKill(w http.ResponseWriter, r *http.Request) {
+	var (
+		err         error
+		name        string
+		respContent []byte
+	)
+
+	//1.解析POST表单
+	if err = r.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	//2.获取待删除的任务名
+	name = r.PostForm.Get("name")
+
+	//3.从etcd中删除任务
+	if err = G_JobMgr.JobKill(name); err != nil {
+		goto ERR
+	}
+
+	//4.返回正常应答
+	if respContent, err = common.BuildResponse(0, "success", ""); err == nil {
+		w.Write(respContent)
+	}
+
+	return
+ERR:
+	//5.返回异常应答
+	if respContent, err = common.BuildResponse(-1, "failed", nil); err == nil {
+		w.Write(respContent)
+	}
+}
+
 //初始化服务
 func InitApiServer() error {
 	var (
@@ -140,6 +174,7 @@ func InitApiServer() error {
 	mux.HandleFunc("/job/save", handleJobSave)
 	mux.HandleFunc("/job/list", handleJobList)
 	mux.HandleFunc("/job/delete", handleJobDelete)
+	mux.HandleFunc("/job/kill", handleJobKill)
 
 	//启动TCP侦听
 	if listen, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.ApiPort)); err != nil {

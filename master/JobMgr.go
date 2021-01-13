@@ -56,6 +56,32 @@ func InitJobMgr() (err error) {
 	return err
 }
 
+func (jobMrg *JobMgr) JobKill(name string) error {
+	var (
+		err            error
+		leaseGrantResp *clientv3.LeaseGrantResponse
+		leaseId        clientv3.LeaseID
+		putResp        *clientv3.PutResponse
+	)
+	//通知worker /job/killer/任务名
+	killerKey := common.JOB_KILLER_DIR + name
+	timeout := 1 //租约过期时间
+
+	//让worker监听到一次put操作，创建一个租约让其自动过期(1s)
+	if leaseGrantResp, err = jobMrg.lease.Grant(context.TODO(), int64(timeout)); err != nil {
+		return err
+	}
+
+	leaseId = leaseGrantResp.ID
+	putResp, err = jobMrg.kv.Put(context.TODO(), killerKey, "", clientv3.WithLease(leaseId))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("JobKill response:%v", putResp)
+	return err
+}
+
 //保存任务，保存成功返回上一个任务,新增任务和保存任务是一个接口
 func (jobMrg *JobMgr) JobSave(job *common.Job) (oldJob *common.Job, err error) {
 	var (
