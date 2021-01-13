@@ -6,9 +6,10 @@ import (
 )
 
 type JobMgr struct {
-	client *clientv3.Client
-	kv     clientv3.KV
-	lease  clientv3.Lease
+	client  *clientv3.Client
+	kv      clientv3.KV
+	lease   clientv3.Lease
+	watcher clientv3.Watcher
 }
 
 //任务管理的单例
@@ -16,13 +17,28 @@ var (
 	G_JobMgr *JobMgr
 )
 
+//监听任务变化
+func (jobMgr *JobMgr) watchJobs() error {
+	var err error
+	//TODO:not implement
+	return err
+}
+
+//监听强杀任务通知
+func (jobMgr *JobMgr) watchKiller() error {
+	var err error
+	//TODO:not implement
+	return err
+}
+
 //初始化任务管理器,或者返回JobMrg指针变量，和etcd建立连接
 func InitJobMgr() (err error) {
 	var (
-		config clientv3.Config
-		client *clientv3.Client
-		kv     clientv3.KV
-		lease  clientv3.Lease
+		config  clientv3.Config
+		client  *clientv3.Client
+		kv      clientv3.KV
+		lease   clientv3.Lease
+		watcher clientv3.Watcher
 	)
 
 	//初始化配置
@@ -36,17 +52,17 @@ func InitJobMgr() (err error) {
 		return err
 	}
 
-	//新建用于读写键值对的kv
+	//得到KV和Lease的API子集
 	kv = clientv3.NewKV(client)
-
-	//新建租约
 	lease = clientv3.NewLease(client)
+	watcher = clientv3.NewWatcher(client)
 
 	//赋值单例
 	G_JobMgr = &JobMgr{
-		client: client,
-		lease:  lease,
-		kv:     kv,
+		client:  client,
+		lease:   lease,
+		kv:      kv,
+		watcher: watcher,
 	}
 
 	return err
