@@ -6,6 +6,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"time"
 )
 
@@ -80,7 +81,7 @@ func main() {
 	}
 	fmt.Printf("collection count:%d\n", cnt)
 
-	cursor, err = collection.Find(context.TODO(), cond)
+	cursor, err = collection.Find(context.TODO(), cond, findopt.Skip(0), findopt.Limit(2))
 	if err != nil {
 		fmt.Println("collection Find failed")
 		return
