@@ -77,6 +77,7 @@ func main() {
 		return
 	}
 
+	//8、查看所有插入的id索引
 	for _, insertId := range manyResult.InsertedIDs {
 		// 拿着interface{}， 反射成objectID
 		docId = insertId.(objectid.ObjectID)
