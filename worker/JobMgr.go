@@ -1,7 +1,10 @@
 package worker
 
 import (
+	"context"
+	"distributed_contrab/common"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"time"
 )
 
@@ -19,7 +22,58 @@ var (
 
 //监听任务变化
 func (jobMgr *JobMgr) watchJobs() error {
-	var err error
+	var (
+		err     error
+		getResp *clientv3.GetResponse
+	)
+
+	//1.获取/cron/jobs目录下所有任务
+	getResp, err = jobMgr.client.Get(context.TODO(), common.JOB_SAVE_DIR, clientv3.WithPrefix())
+	if err != nil {
+		return err
+	}
+
+	//2.将已存在的任务投递到调度器中
+	for _, kvpair := range getResp.Kvs {
+		var job *common.Job
+		job, err = common.UnpackJob(kvpair.Value)
+		if err != nil {
+
+		}
+		common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
+		//TODO:将job事件投递给调度器
+	}
+
+	//3.监听所有任务的变化
+	go func() {
+		watchStartVersion := getResp.Header.Revision + 1
+		//监听cron/jobs目录的后续变化
+		watchChan := jobMgr.watcher.Watch(context.TODO(), common.JOB_SAVE_DIR, clientv3.WithRev(watchStartVersion))
+		for watchResp := range watchChan {
+			for _, event := range watchResp.Events {
+				switch event.Type {
+				case mvccpb.PUT:
+					//生成job删除事件，
+					var job *common.Job
+					if job, err = common.UnpackJob(event.Kv.Value); err != nil {
+						continue
+					}
+					common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
+					//TODO:将job事件投递给调度器
+				case mvccpb.DELETE:
+					var job *common.Job
+					if job, err = common.UnpackJob(event.Kv.Value); err != nil {
+						continue
+					}
+					common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
+					//TODO:将job事件投递给调度器
+				}
+			}
+		}
+	}()
+
+	//put变化
+	//delete变化
 	//TODO:not implement
 	return err
 }
@@ -64,6 +118,9 @@ func InitJobMgr() (err error) {
 		kv:      kv,
 		watcher: watcher,
 	}
+
+	//启动任务监听
+	go G_JobMgr.watchJobs()
 
 	return err
 }

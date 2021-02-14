@@ -43,6 +43,10 @@ func main() {
 	}
 
 	//初始化任务管理
+	err = worker.InitJobMgr()
+	if err != nil {
+		goto ERR
+	}
 
 	for {
 		time.Sleep(time.Second)
