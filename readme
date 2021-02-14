@@ -12,3 +12,9 @@ prepare目录中代码是写分布式任务调度时的预备知识练习
 
 08-10
 熟悉任务管理器JobMgr,初始化etcd相关环境
+
+etcd启动参数
+nohup etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &
+
+mongodb启动参数
+nohup mongod --dbpath=./data --bind-ip=0.0.0.0 &
