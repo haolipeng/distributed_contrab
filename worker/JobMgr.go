@@ -33,20 +33,21 @@ func (jobMgr *JobMgr) watchJobs() error {
 		return err
 	}
 
-	//2.将已存在的任务投递到调度器中
+	//2.获取etcd中已存在的任务，并将其投递到调度器中
 	for _, kvpair := range getResp.Kvs {
 		var job *common.Job
 		job, err = common.UnpackJob(kvpair.Value)
 		if err != nil {
-
+			continue
 		}
-		common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
-		//TODO:将job事件投递给调度器
+		jobEvent := common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
+		G_scheduler.PushJobEvent(jobEvent)
 	}
 
 	//3.监听所有任务的变化
 	go func() {
 		watchStartVersion := getResp.Header.Revision + 1
+		var jobEvent *common.JobEvent
 		//监听cron/jobs目录的后续变化
 		watchChan := jobMgr.watcher.Watch(context.TODO(), common.JOB_SAVE_DIR, clientv3.WithRev(watchStartVersion))
 		for watchResp := range watchChan {
@@ -58,31 +59,35 @@ func (jobMgr *JobMgr) watchJobs() error {
 					if job, err = common.UnpackJob(event.Kv.Value); err != nil {
 						continue
 					}
-					common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
-					//TODO:将job事件投递给调度器
+					jobEvent = common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
 				case mvccpb.DELETE:
-					var job *common.Job
-					if job, err = common.UnpackJob(event.Kv.Value); err != nil {
-						continue
-					}
-					common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
-					//TODO:将job事件投递给调度器
+					jobName := common.ExtractJobName(string(event.Kv.Key))
+					job := &common.Job{Name: jobName}
+
+					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
 				}
+				G_scheduler.PushJobEvent(jobEvent)
 			}
 		}
 	}()
-
-	//put变化
-	//delete变化
-	//TODO:not implement
 	return err
 }
 
 //监听强杀任务通知
-func (jobMgr *JobMgr) watchKiller() error {
-	var err error
-	//TODO:not implement
-	return err
+func (jobMgr *JobMgr) watchKiller() {
+	watchChan := jobMgr.watcher.Watch(context.TODO(), common.JOB_KILLER_DIR, clientv3.WithPrefix())
+	for watchResp := range watchChan {
+		for _, event := range watchResp.Events {
+			switch event.Type {
+			case mvccpb.PUT:
+				jobName := common.ExtractKillerName(string(event.Kv.Key))
+				job := &common.Job{Name: jobName}
+				jobEvent := common.BuildJobEvent(common.JOB_EVENT_KILL, job)
+				G_scheduler.PushJobEvent(jobEvent)
+			case mvccpb.DELETE: //killer 标记过期，被自动删除
+			}
+		}
+	}
 }
 
 //初始化任务管理器,或者返回JobMrg指针变量，和etcd建立连接
@@ -103,6 +108,7 @@ func InitJobMgr() (err error) {
 
 	//新建连接
 	if client, err = clientv3.New(config); err != nil {
+		panic("etcd client new failed")
 		return err
 	}
 
@@ -120,7 +126,13 @@ func InitJobMgr() (err error) {
 	}
 
 	//启动任务监听
-	go G_JobMgr.watchJobs()
+	err = G_JobMgr.watchJobs()
+	if err != nil {
+		panic("watchJobs() error")
+	}
+
+	//启动killer任务监听
+	G_JobMgr.watchKiller()
 
 	return err
 }
