@@ -19,7 +19,7 @@ func main() {
 
 	//192.168.57.139是etcd的ip地址，根据自己情况来配置
 	config = clientv3.Config{
-		Endpoints:   []string{"192.168.57.139:2379"}, // 集群列表
+		Endpoints:   []string{"192.168.43.185:2379"}, // 集群列表
 		DialTimeout: 5 * time.Second,
 	}
 
@@ -32,7 +32,7 @@ func main() {
 	// 用于读写etcd的键值对
 	kv = clientv3.NewKV(client)
 
-	//put 操作
+	//op put 操作
 	op = clientv3.OpPut("/cron/jobs/job3", "haolipeng")
 	if opResp, err = kv.Do(context.TODO(), op); err != nil {
 		fmt.Println(err)
@@ -41,7 +41,7 @@ func main() {
 
 	fmt.Println("写入Revision", opResp.Put().Header.Revision)
 
-	//get 操作
+	//op get 操作
 	op = clientv3.OpGet("/cron/jobs/job3")
 	if opResp, err = kv.Do(context.TODO(), op); err != nil {
 		fmt.Println(err)

@@ -26,7 +26,7 @@ func main() {
 
 	//192.168.57.139是etcd的ip地址，根据自己情况来配置
 	config = clientv3.Config{
-		Endpoints:   []string{"192.168.57.139:2379"}, // 集群列表
+		Endpoints:   []string{"192.168.43.185:2379"}, // 集群列表
 		DialTimeout: 5 * time.Second,
 	}
 
@@ -46,6 +46,9 @@ func main() {
 	go func() {
 		for {
 			putResp, err = kv.Put(context.TODO(), "/cron/jobs/job1", "123")
+			//查看put操作后,revision版本信息
+			//fmt.Println("put action revision:",putResp.Header.Revision)
+
 			deleteResp, err = kv.Delete(context.TODO(), "/cron/jobs/job1")
 
 			time.Sleep(time.Second * 1)
@@ -68,6 +71,7 @@ func main() {
 	fmt.Println("从该版本向后监听：", watchStartRevision)
 
 	ctx, cancelFun := context.WithCancel(context.TODO())
+	//表示5秒后要执行cancelFun()函数
 	time.AfterFunc(5*time.Second, func() {
 		cancelFun()
 	})
@@ -84,6 +88,7 @@ func main() {
 				fmt.Println("删除了", "Revision:", event.Kv.ModRevision)
 			}
 		}
+		fmt.Println("###########################################")
 	}
 
 	////normal watch

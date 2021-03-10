@@ -26,7 +26,7 @@ func main() {
 
 	//配置信息 Endpoints 是集群服务器地址
 	config = clientv3.Config{
-		Endpoints:   []string{"192.168.57.139:2379"},
+		Endpoints:   []string{"192.168.43.185:2379"},
 		DialTimeout: 5 * time.Second,
 	}
 
@@ -40,74 +40,86 @@ func main() {
 	//op操作
 	//txn事务：if else then
 	//创建租约
+
+	//一.上锁
+	//(创建租约、自动续租、拿着租约去抢占锁，抢占期间要确保租约是有效的)
 	lease = clientv3.NewLease(client)
 
-	//申请一个5秒的租约,5s之后自动过期（如果不续约）
-	if leaseGrantResp, err = lease.Grant(context.TODO(), 5); err != nil {
+	// 申请一个5s的租约，观察其是否过期
+	leaseGrantResp, err = lease.Grant(context.TODO(), 10)
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	//拿到租约id
+	//获取租约id
 	leaseId = leaseGrantResp.ID
 
-	//准备一个用于取消自动续租的context
+	//准备一个取消自动续租的context
 	ctx, cancelFunc = context.WithCancel(context.TODO())
 
 	//确保函数退出后，自动续租会停止
 	defer cancelFunc()
-	defer lease.Revoke(context.TODO(), leaseId) //revoke单词是取消/废除的意思
+	defer lease.Revoke(context.TODO(), leaseId) //释放租约
 
-	//5s后会取消自动续租
-	if keepRespChan, err = lease.KeepAlive(ctx, leaseId); err != nil {
+	// 自动续租
+	keepRespChan, err = lease.KeepAlive(ctx, leaseId)
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	//处理续约应答的协程
+	//监视续租的变化情况
 	go func() {
 		for {
 			select {
 			case keepResp = <-keepRespChan:
+				//以前的示例代码有问题
 				if keepResp == nil {
-					fmt.Println("租约已经失效了")
+					fmt.Println("租约已经失效!", time.Now().String())
 					goto END
-				} else {
-					//每秒会续租一次，所以会收到一次应答
-					fmt.Println("收到自动续租：", keepResp.ID)
+				} else if keepRespChan != nil {
+					//每秒会续租一次，所以会受到一次续租应答
+					fmt.Println("收到续租应答:", keepResp.ID, time.Now().String())
 				}
 			}
 		}
 	END:
 	}()
 
-	//if 不存在key，the 设置它，else 抢锁失败
+	//二.业务逻辑操作
+	//0.创建KV键
 	kv = clientv3.NewKV(client)
 
-	//创建事务
+	//1.创建事务
 	txn = kv.Txn(context.TODO())
 
-	//定义事务
-	txn.If(clientv3.Compare(clientv3.CreateRevision("/cron/lock/job9"), "=", 0)).
-		Then(clientv3.OpPut("/cron/lock/job9", "xxx", clientv3.WithLease(leaseId))).
-		Else(clientv3.OpGet("/cron/lock/job9"))
+	//2.定义事务
+	//如果key不存在
+	txn.If(clientv3.Compare(clientv3.CreateRevision("/cron/jobs/job9"), "=", 0)).
+		Then(clientv3.OpPut("/cron/jobs/job9", "xxx", clientv3.WithLease(leaseId))).
+		Else(clientv3.OpGet("/cron/jobs/job9"))
 
-	//提交事务
+	//3.提交事务
 	if txnResp, err = txn.Commit(); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	//判断是否抢到了锁
+	//4.判断是否成功抢到锁
 	if !txnResp.Succeeded {
-		fmt.Println("锁被占用", string(txnResp.Responses[0].GetResponseRange().Kvs[0].Value))
+		fmt.Println("锁被占用:", string(txnResp.Responses[0].GetResponseRange().Kvs[0].Value))
 		return
+	} else {
+		fmt.Println("成功抢占到锁")
 	}
 
-	//处理业务
-	fmt.Println("处理业务")
+	//处理业务逻辑
+	fmt.Println("处理任务")
 	time.Sleep(5 * time.Second)
 
-	//3.释放(取消自动续约，释放租约)
-	//defer会把租约释放掉，关联的KV就被删除了
+	//三.释放锁
+	//前面已经完成此操作
+	//defer cancelFunc()
+	//defer lease.Revoke(context.TODO(),leaseId) //释放租约
 }

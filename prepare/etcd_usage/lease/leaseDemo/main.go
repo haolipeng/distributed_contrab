@@ -109,5 +109,6 @@ func main() {
 	}()*/
 
 	//手动睡眠30秒
-	time.Sleep(30 * time.Minute)
+	time.Sleep(30 * time.Second)
+	fmt.Println("the pro")
 }
