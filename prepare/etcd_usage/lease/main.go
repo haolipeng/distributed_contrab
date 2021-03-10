@@ -23,7 +23,7 @@ func main() {
 
 	//初始化配置，192.168.57.139是etcd的ip地址
 	config = clientv3.Config{
-		Endpoints:   []string{"192.168.57.139:2379"}, // 集群列表
+		Endpoints:   []string{"192.168.43.185:2379"}, // 集群列表
 		DialTimeout: 5 * time.Second,
 	}
 

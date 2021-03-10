@@ -16,5 +16,8 @@ prepare目录中代码是写分布式任务调度时的预备知识练习
 etcd启动参数
 nohup etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &
 
+windows平台启动参数
+etcd.exe --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &
+
 mongodb启动参数
 nohup bin/mongod --dbpath=./data --bind_ip=0.0.0.0 &

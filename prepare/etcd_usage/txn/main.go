@@ -24,7 +24,7 @@ func main() {
 		txnResp        *clientv3.TxnResponse
 	)
 
-	//配置信息
+	//配置信息 Endpoints 是集群服务器地址
 	config = clientv3.Config{
 		Endpoints:   []string{"192.168.57.139:2379"},
 		DialTimeout: 5 * time.Second,

@@ -2,6 +2,7 @@ package worker
 
 import (
 	"distributed_contrab/common"
+	"fmt"
 	"time"
 )
 
@@ -59,6 +60,7 @@ func (scheduler *Scheduler) TryScheduler() time.Duration {
 		if jobPlan.NextTime.Before(curTime) || jobPlan.NextTime.Equal(curTime) {
 			// TODO:尝试开始执行任务
 			// 重新计算过期时间
+			fmt.Printf("job name:%s\n execute time:%s", jobPlan.Job, jobPlan.NextTime.String())
 			jobPlan.NextTime = jobPlan.Expr.Next(curTime)
 		}
 
