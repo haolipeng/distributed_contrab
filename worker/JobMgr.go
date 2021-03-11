@@ -68,7 +68,11 @@ func (jobMgr *JobMgr) watchJobs() error {
 
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE, job)
 				}
-				G_scheduler.PushJobEvent(jobEvent)
+
+				//fix bug,while jobEvent is not mvccpb.PUT or mvccpb.DELETE case
+				if jobEvent != nil {
+					G_scheduler.PushJobEvent(jobEvent)
+				}
 			}
 		}
 	}()
@@ -111,6 +115,14 @@ func InitJobMgr() (err error) {
 	//新建连接
 	if client, err = clientv3.New(config); err != nil {
 		panic("etcd client new failed")
+		return err
+	}
+
+	//etcd连接状态检测
+	timeoutCtx, _ := context.WithTimeout(context.TODO(), config.DialTimeout)
+	_, err = client.Status(timeoutCtx, config.Endpoints[0])
+	if err != nil {
+		fmt.Printf("etcd %s is not ready,please start etcd first", config.Endpoints[0])
 		return err
 	}
 

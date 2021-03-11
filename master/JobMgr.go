@@ -40,6 +40,14 @@ func InitJobMgr() (err error) {
 		return err
 	}
 
+	//etcd连接状态检测
+	timeoutCtx, _ := context.WithTimeout(context.TODO(), config.DialTimeout)
+	_, err = client.Status(timeoutCtx, config.Endpoints[0])
+	if err != nil {
+		fmt.Printf("etcd %s is not ready,please start etcd first", config.Endpoints[0])
+		return err
+	}
+
 	//新建用于读写键值对的kv
 	kv = clientv3.NewKV(client)
 
