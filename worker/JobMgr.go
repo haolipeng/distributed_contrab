@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"distributed_contrab/common"
+	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"time"
@@ -38,6 +39,7 @@ func (jobMgr *JobMgr) watchJobs() error {
 		var job *common.Job
 		job, err = common.UnpackJob(kvpair.Value)
 		if err != nil {
+			fmt.Println("watchJobs UnpackJob failed")
 			continue
 		}
 		jobEvent := common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
