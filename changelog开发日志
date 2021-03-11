@@ -1,0 +1,23 @@
+prepare目录中代码是写分布式任务调度时的预备知识练习
+主要包括以下内容
+1.etcd的api使用
+2.mongodb的api使用
+
+##开发进度日志
+08-07
+1、解析json配置文件
+2、命令行参数，运行环境初始化
+3、搭建简易api server，其处理函数未实现（留白）
+4、公共结构体common中
+
+08-10
+熟悉任务管理器JobMgr,初始化etcd相关环境
+
+etcd启动参数
+nohup etcd --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &
+
+windows平台启动参数
+etcd.exe --listen-client-urls 'http://0.0.0.0:2379' --advertise-client-urls 'http://0.0.0.0:2379' &
+
+mongodb启动参数
+nohup bin/mongod --dbpath=./data --bind_ip=0.0.0.0 &
