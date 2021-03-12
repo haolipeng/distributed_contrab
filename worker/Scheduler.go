@@ -58,7 +58,7 @@ func (scheduler *Scheduler) tryStartJob(jobPlan *common.JobSchedulerPlan) {
 	scheduler.jobExecutingTable[jobPlan.Job.Name] = executeJobInfo
 
 	// 开始执行任务
-	fmt.Println("执行任务:", executeJobInfo.Job.Name, executeJobInfo.PlanTime, executeJobInfo.RealTime)
+	fmt.Println("执行任务:", executeJobInfo.Job.Name)
 	G_Executor.ExecutorJob(executeJobInfo)
 }
 
@@ -69,14 +69,14 @@ func (scheduler *Scheduler) handleJobExecuteResult(result *common.JobExecuteResu
 		fmt.Println("handleJobExecuteResult function result.JobInfo is nil pointer")
 	}
 	delete(scheduler.jobExecutingTable, result.JobInfo.Job.Name)
-	fmt.Printf("任务 %s 执行完成，从任务执行队列jobExecutingTable中删除运行状态", result.JobInfo.Job.Name)
+	fmt.Printf("任务 %s 执行完成，从jobExecutingTable中删除运行状态\n", result.JobInfo.Job.Name)
 	//TODO:生成执行日志
 }
 
 //处理任务事件
 func (scheduler *Scheduler) handleJobEvent(jobEvent *common.JobEvent) {
 	switch jobEvent.EventType {
-	case common.JOB_EVENT_SAVE: //新增和修改
+	case common.JOB_EVENT_SAVE: //新增和修改任务
 		var jobSchedulePlan *common.JobSchedulerPlan
 		var err error
 		if jobSchedulePlan, err = common.BuildJobSchedulerPlan(jobEvent.JobInfo); err != nil {
@@ -84,13 +84,16 @@ func (scheduler *Scheduler) handleJobEvent(jobEvent *common.JobEvent) {
 		}
 		//更新任务调度计划表
 		scheduler.jobPlanTable[jobEvent.JobInfo.Name] = jobSchedulePlan
-	case common.JOB_EVENT_DELETE: //删除
+	case common.JOB_EVENT_DELETE: //删除任务
 		//判断任务是否存在
 		if _, ok := scheduler.jobPlanTable[jobEvent.JobInfo.Name]; ok {
 			delete(scheduler.jobPlanTable, jobEvent.JobInfo.Name)
 		}
-		//case common.JOB_EVENT_KILL:
-		//TODO:强杀任务
+	case common.JOB_EVENT_KILL: //强杀任务
+		// 判断任务是否在运行状态，处于运行状态则取消命令的执行
+		if jobExecuteInfo, ok := scheduler.jobExecutingTable[jobEvent.JobInfo.Name]; ok {
+			jobExecuteInfo.CancelFunc()
+		}
 	}
 }
 
@@ -114,7 +117,7 @@ func (scheduler *Scheduler) TryScheduler() time.Duration {
 			scheduler.tryStartJob(jobPlan)
 
 			// 重新计算过期时间
-			fmt.Printf("job name:%s execute time:%s\n", jobPlan.Job, jobPlan.NextTime.String())
+			//fmt.Printf("job name:%s execute time:%s\n", jobPlan.Job, jobPlan.NextTime.String())
 			jobPlan.NextTime = jobPlan.Expr.Next(curTime)
 		}
 
