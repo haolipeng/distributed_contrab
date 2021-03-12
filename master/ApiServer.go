@@ -39,7 +39,7 @@ func handleJobSave(w http.ResponseWriter, r *http.Request) {
 	//2.取表单中的job字段
 	jobContent = r.PostForm.Get("job")
 
-	fmt.Printf("/job/save : %s\n", jobContent)
+	fmt.Printf("任务保存接口/job/save: %s\n", jobContent)
 
 	//3.反序列化job
 	if err = json.Unmarshal([]byte(jobContent), &job); err != nil {
@@ -77,6 +77,8 @@ func handleJobList(w http.ResponseWriter, r *http.Request) {
 		goto ERR
 	}
 
+	fmt.Println("获取任务列表接口/job/list")
+
 	//5.返回正常应答
 	if respContent, err = common.BuildResponse(0, "success", jobList); err == nil {
 		w.Write(respContent)
@@ -107,6 +109,8 @@ func handleJobDelete(w http.ResponseWriter, r *http.Request) {
 
 	//2.获取待删除的任务名
 	name = r.PostForm.Get("name")
+
+	fmt.Printf("删除任务接口/job/delete: %s\n", name)
 
 	//3.从etcd中删除任务
 	if oldJob, err = G_JobMgr.JobDelete(name); err != nil {
@@ -141,6 +145,8 @@ func handleJobKill(w http.ResponseWriter, r *http.Request) {
 
 	//2.获取待删除的任务名
 	name = r.PostForm.Get("name")
+
+	fmt.Printf("强杀任务接口/job/kill: %s\n", name)
 
 	//3.从etcd中删除任务
 	if err = G_JobMgr.JobKill(name); err != nil {
