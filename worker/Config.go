@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 )
 
-//TODO:work的配置和master的配置参数不同
 //解析json
 type Config struct {
 	ApiPort         int      `json:"apiPort"`
@@ -41,7 +40,7 @@ func InitConfig(fileName string) (err error) {
 		return
 	}
 
-	fmt.Printf("port:%d readTimeout:%d writeTimeout:%d\n", cfg.ApiPort, cfg.ApiReadTimeout, cfg.ApiWriteTimeout)
+	fmt.Println("work cfg: \n", cfg)
 
 	//赋值单例
 	G_config = &cfg

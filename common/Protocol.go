@@ -31,6 +31,15 @@ type JobExecuteInfo struct {
 	CancelFunc context.CancelFunc //用户取消command执行的cancel函数
 }
 
+// 任务执行结果
+type JobExecuteResult struct {
+	JobInfo   *JobExecuteInfo
+	Output    []byte
+	Err       error
+	StartTime time.Time
+	EndTime   time.Time
+}
+
 type JobEvent struct {
 	EventType int
 	JobInfo   *Job
@@ -40,6 +49,20 @@ type Response struct {
 	Errno int         `json:"errno"`
 	Msg   string      `json:"msg"`
 	Data  interface{} `json:"data"`
+}
+
+func BuildJobExecuteInfo(jobPlan *JobSchedulerPlan) *JobExecuteInfo {
+	ctx, cancelFunc := context.WithCancel(context.TODO())
+
+	executeInfo := &JobExecuteInfo{
+		Job:        jobPlan.Job,
+		PlanTime:   jobPlan.NextTime,
+		RealTime:   time.Now(),
+		CancelCtx:  ctx,
+		CancelFunc: cancelFunc,
+	}
+
+	return executeInfo
 }
 
 func BuildJobSchedulerPlan(job *Job) (*JobSchedulerPlan, error) {
