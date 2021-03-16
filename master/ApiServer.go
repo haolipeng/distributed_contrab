@@ -235,6 +235,11 @@ ERR:
 	}
 }
 
+//初始化gin服务
+func InitGinServer() error {
+	return nil
+}
+
 //初始化服务
 func InitApiServer() error {
 	var (

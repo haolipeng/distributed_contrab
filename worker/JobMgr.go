@@ -150,3 +150,8 @@ func InitJobMgr() (err error) {
 
 	return err
 }
+
+func (jobMgr *JobMgr) CreateJobLock(jobName string) *JobLock {
+	jobLock := InitJobLock(jobName, jobMgr.kv, jobMgr.lease)
+	return jobLock
+}

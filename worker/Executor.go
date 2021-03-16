@@ -29,6 +29,8 @@ func (executor *Executor) ExecutorJob(jobInfo *common.JobExecuteInfo) {
 	}
 
 	//TODO: 这块需要分布式锁，成功获取到分布式锁，才能开始执行任务
+	// 初始化分布式锁
+
 	result.StartTime = time.Now()
 
 	//真正执行命令，修复windows上使用bash的兼容性bug
