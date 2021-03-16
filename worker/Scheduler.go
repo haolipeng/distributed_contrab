@@ -65,12 +65,31 @@ func (scheduler *Scheduler) tryStartJob(jobPlan *common.JobSchedulerPlan) {
 //处理任务执行的结果
 func (scheduler *Scheduler) handleJobExecuteResult(result *common.JobExecuteResult) {
 	//删除执行状态
-	if result.JobInfo == nil {
+	if result.ExecuteInfo == nil {
 		fmt.Println("handleJobExecuteResult function result.JobInfo is nil pointer")
 	}
-	delete(scheduler.jobExecutingTable, result.JobInfo.Job.Name)
-	fmt.Printf("任务 %s 执行完成，从jobExecutingTable中删除运行状态\n", result.JobInfo.Job.Name)
-	//TODO:生成执行日志
+	delete(scheduler.jobExecutingTable, result.ExecuteInfo.Job.Name)
+	fmt.Printf("任务 %s 执行完成，从jobExecutingTable中删除运行状态\n", result.ExecuteInfo.Job.Name)
+
+	//生成任务执行日志，并发送给日志管理器
+	var errStr string
+	if result.Err != nil {
+		errStr = result.Err.Error()
+	} else {
+		errStr = ""
+	}
+	jobLog := &common.JobLog{
+		JobName:      result.ExecuteInfo.Job.Name,
+		Command:      result.ExecuteInfo.Job.Command,
+		Err:          errStr,
+		Output:       string(result.Output),
+		PlanTime:     result.ExecuteInfo.PlanTime.Unix(),
+		ScheduleTime: result.ExecuteInfo.RealTime.Unix(),
+		StartTime:    result.StartTime.UnixNano() / 1000 / 1000,
+		EndTime:      result.EndTime.UnixNano() / 1000 / 1000,
+	}
+
+	G_logSink.Append(jobLog)
 }
 
 //处理任务事件

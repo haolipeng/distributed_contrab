@@ -33,11 +33,18 @@ func main() {
 		record     *LogRecord
 	)
 	//1、连接数据库
-	client, err = mongo.Connect(context.TODO(), "mongodb://192.168.101.240:27017", clientopt.ConnectTimeout(5*time.Second))
+	client, err = mongo.Connect(context.TODO(), "mongodb://127.0.0.1:27017", clientopt.ConnectTimeout(5*time.Second))
 	if err != nil {
 		fmt.Println("Connect mongodb failed,err:", err)
 		return
 	}
+	// 枚举数据库
+	databaseList, err := client.ListDatabaseNames(context.TODO(), "")
+	if err != nil {
+		fmt.Println("mongodb ListDatabaseNames failed,err:", err)
+		return
+	}
+	fmt.Println("databases list:", databaseList)
 
 	//2、选择数据库
 	database = client.Database("my_db")
@@ -54,7 +61,7 @@ func main() {
 		TimePoint: TimePoint{StartTime: time.Now().Unix(), EndTime: time.Now().Unix() + 10},
 	}
 
-	//5、插入元素
+	//5、插入元素,插入的元素都是interface{}类型
 	if result, err = collection.InsertOne(context.TODO(), record); err != nil {
 		fmt.Println("collection insert failed!")
 		return

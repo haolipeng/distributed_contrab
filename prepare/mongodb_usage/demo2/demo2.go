@@ -40,7 +40,7 @@ func main() {
 		cond       *FindByJobName
 	)
 	//1、连接数据库
-	client, err = mongo.Connect(context.TODO(), "mongodb://192.168.101.240:27017", clientopt.ConnectTimeout(5*time.Second))
+	client, err = mongo.Connect(context.TODO(), "mongodb://127.0.0.1:27017", clientopt.ConnectTimeout(5*time.Second))
 	if err != nil {
 		fmt.Println("Connect mongodb failed,err:", err)
 		return
@@ -72,7 +72,7 @@ func main() {
 	fmt.Println("insertOne success,insertedID:", docId.Hex())
 
 	//cond := &LogRecord{JobName: "Job10"}
-	// 4, 按照jobName字段过滤, 想找出jobName=job10, 找出5条
+	// 4, 按照jobName字段过滤, 想找出jobName=job10,
 	cond = &FindByJobName{JobName: "Job10"} // {"jobName": "job10"}
 	cnt, err := collection.Count(context.TODO(), cond)
 	if err != nil {
@@ -81,7 +81,8 @@ func main() {
 	}
 	fmt.Printf("collection count:%d\n", cnt)
 
-	cursor, err = collection.Find(context.TODO(), cond, findopt.Skip(0), findopt.Limit(2))
+	//5, 按照jobName字段过滤, 想找出jobName=job10,限制只寻找五条
+	cursor, err = collection.Find(context.TODO(), cond, findopt.Skip(0), findopt.Limit(5))
 	if err != nil {
 		fmt.Println("collection Find failed")
 		return

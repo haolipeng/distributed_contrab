@@ -42,6 +42,12 @@ func main() {
 		goto ERR
 	}
 
+	// 初始化日志管理器
+	err = worker.InitLogSink()
+	if err != nil {
+		goto ERR
+	}
+
 	//初始化注册节点
 	err = worker.InitRegister()
 	if err != nil {
