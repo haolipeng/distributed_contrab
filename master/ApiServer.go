@@ -4,6 +4,7 @@ import (
 	"distributed_contrab/common"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net"
 	"net/http"
 	"strconv"
@@ -39,7 +40,7 @@ func handleJobSave(w http.ResponseWriter, r *http.Request) {
 	//2.取表单中的job字段
 	jobContent = r.PostForm.Get("job")
 
-	fmt.Printf("任务保存接口/job/save: %s\n", jobContent)
+	fmt.Printf("http方法:%s 任务保存接口/job/save: %s\n", r.Method, jobContent)
 
 	//3.反序列化job
 	if err = json.Unmarshal([]byte(jobContent), &job); err != nil {
@@ -65,6 +66,10 @@ ERR:
 	}
 }
 
+func ginHandleJobList(ctx *gin.Context) {
+
+}
+
 //枚举所有任务(需要补充测试用例)
 func handleJobList(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -77,7 +82,7 @@ func handleJobList(w http.ResponseWriter, r *http.Request) {
 		goto ERR
 	}
 
-	fmt.Println("获取任务列表接口/job/list")
+	fmt.Printf("method:%s 获取任务列表接口/job/list", r.Method)
 
 	//5.返回正常应答
 	if respContent, err = common.BuildResponse(0, "success", jobList); err == nil {
@@ -110,7 +115,7 @@ func handleJobDelete(w http.ResponseWriter, r *http.Request) {
 	//2.获取待删除的任务名
 	name = r.PostForm.Get("name")
 
-	fmt.Printf("删除任务接口/job/delete: %s\n", name)
+	fmt.Printf("method:%s 删除任务接口/job/delete: %s\n", r.Method, name)
 
 	//3.从etcd中删除任务
 	if oldJob, err = G_JobMgr.JobDelete(name); err != nil {
@@ -127,51 +132,6 @@ ERR:
 	//5.返回异常应答
 	if respContent, err = common.BuildResponse(-1, "failed", nil); err == nil {
 		w.Write(respContent)
-	}
-}
-
-// 查询任务日志
-func handleJobLog(resp http.ResponseWriter, req *http.Request) {
-	var (
-		err        error
-		name       string // 任务名字
-		skipParam  string // 从第几条开始
-		limitParam string // 返回多少条
-		skip       int
-		limit      int
-		logArr     []*common.JobLog
-		bytes      []byte
-	)
-
-	// 解析GET参数
-	if err = req.ParseForm(); err != nil {
-		goto ERR
-	}
-
-	// 获取请求参数 /job/log?name=job10&skip=0&limit=10
-	name = req.Form.Get("name")
-	skipParam = req.Form.Get("skip")
-	limitParam = req.Form.Get("limit")
-	if skip, err = strconv.Atoi(skipParam); err != nil {
-		skip = 0
-	}
-	if limit, err = strconv.Atoi(limitParam); err != nil {
-		limit = 20
-	}
-
-	if logArr, err = G_logMgr.ListLog(name, skip, limit); err != nil {
-		goto ERR
-	}
-
-	// 正常应答
-	if bytes, err = common.BuildResponse(0, "success", logArr); err == nil {
-		resp.Write(bytes)
-	}
-	return
-
-ERR:
-	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
-		resp.Write(bytes)
 	}
 }
 
@@ -235,8 +195,58 @@ ERR:
 	}
 }
 
+// 查询任务日志
+func handleJobLog(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err        error
+		name       string // 任务名字
+		skipParam  string // 从第几条开始
+		limitParam string // 返回多少条
+		skip       int
+		limit      int
+		logArr     []*common.JobLog
+		bytes      []byte
+	)
+
+	// 解析GET参数
+	if err = req.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	// 获取请求参数 /job/log?name=job10&skip=0&limit=10
+	name = req.Form.Get("name")
+	skipParam = req.Form.Get("skip")
+	limitParam = req.Form.Get("limit")
+	if skip, err = strconv.Atoi(skipParam); err != nil {
+		skip = 0
+	}
+	if limit, err = strconv.Atoi(limitParam); err != nil {
+		limit = 20
+	}
+
+	fmt.Printf("method:%s 查看任务执行日志/job/log: %s\n", req.Method, name)
+
+	if logArr, err = G_logMgr.ListLog(name, skip, limit); err != nil {
+		goto ERR
+	}
+
+	// 正常应答
+	if bytes, err = common.BuildResponse(0, "success", logArr); err == nil {
+		resp.Write(bytes)
+	}
+	return
+
+ERR:
+	if bytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
 //初始化gin服务
 func InitGinServer() error {
+	r := gin.Default()
+	r.LoadHTMLFiles("./webroot/index.html")
+	r.GET("/job/list", ginHandleJobList) //任务列表
 	return nil
 }
 
